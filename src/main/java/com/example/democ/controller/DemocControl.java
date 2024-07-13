@@ -2,12 +2,17 @@ package com.example.democ.controller;
 
 import com.example.democ.service.DemocLogic;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer;
 import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
@@ -80,23 +85,34 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
                 e.printStackTrace();
             }
             System.out.println(update.hasCallbackQuery());
-        }   else if (update.hasCallbackQuery()) {
+        } else if (update.hasCallbackQuery()) {
 
-            System.out.println(update.getCallbackQuery().getData()+ ":" + update.getCallbackQuery().getMessage().getChatId()+":"+update.getCallbackQuery().getMessage().getChat().getUserName()+":"+update.getCallbackQuery().getMessage().getChat().getFirstName());
+            System.out.println(update.getCallbackQuery().getData() + ":" + update.getCallbackQuery().getMessage().getChatId() + ":" + update.getCallbackQuery().getMessage().getChat().getUserName() + ":" + update.getCallbackQuery().getMessage().getChat().getFirstName());
 
             String call_data = update.getCallbackQuery().getData();
+            Long chatId = update.getCallbackQuery().getMessage().getChatId();
             switch (call_data) {
+
                 case "Тренировки" -> {
                     answer = "Выберите программу тренировок:";
-                    String[] bca = {"Отжимания","Подтягивания","Брусья"};
-                    SendWithButtons(answer,vec(3,bca,bca),update.getCallbackQuery().getMessage().getChatId());
+                    String[] bca = {"Отжимания", "Подтягивания", "Брусья"};
+                    SendWithButtons(answer, vec(3, bca, bca), update.getCallbackQuery().getMessage().getChatId());
                 }
-                case "Калории" ->{
+                case "Калории" -> {
                     answer = "Введите параметры для подсчета калорий.\n Рост(см):";
-                    Send(answer,update.getCallbackQuery().getMessage().getChatId());
+                    Send(answer, update.getCallbackQuery().getMessage().getChatId());
+                }
+                case "Отжимания" -> {
+                    sendPhoto("https://post-images.org/photo-page.php?photo=rJCbLIYF",chatId);
+                }
+                case "Подтягивания" -> {
+                    sendPhoto("https://post-images.org/photo-page.php?photo=qcxo1zvy",chatId);
+                }
+                case "Брусья" -> {
+                    sendPhoto("https://post-images.org/photo-page.php?photo=JFDNjGaV",chatId);
                 }
             }
-        }else {
+        } else {
             String regex = "(\\d{2}\\.\\d{2}\\.\\d{4}\\s\\d{2}:\\d{2})\\s(.+)";
 
             Pattern pattern = Pattern.compile(regex);
@@ -126,7 +142,8 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
             }
         }
     }
-    void Send(String message_text,long chat_id){
+
+    void Send(String message_text, long chat_id) {
         SendMessage message = SendMessage
                 .builder()
                 .chatId(chat_id)
@@ -139,7 +156,8 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
         }
 
     }
-    void SendWithButtons(String message,Vector<InlineKeyboardButton> vector,long chatId){
+
+    void SendWithButtons(String message, Vector<InlineKeyboardButton> vector, long chatId) {
         SendMessage messag = SendMessage
                 .builder()
                 .chatId(chatId)
@@ -155,7 +173,8 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
             e.printStackTrace();
         }
     }
-    Vector<InlineKeyboardButton> vec(int size,String[] text,String[] callBack){
+
+    Vector<InlineKeyboardButton> vec(int size, String[] text, String[] callBack) {
         Vector<InlineKeyboardButton> vector = new Vector<>();
         for (int i = 0; i < size; i++) {
             vector.add(InlineKeyboardButton
@@ -165,5 +184,12 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
                     .build());
         }
         return vector;
+    }
+
+    public String sendPhoto(String photoUrl, Long chatId) {
+        RestTemplate restTemplate = new RestTemplate();
+        String apiUrl = "https://api.telegram.org/bot" + getBotToken() + "/sendPhoto?chat_id=" + chatId + "&photo=" + photoUrl;
+        String response = restTemplate.postForObject(apiUrl, null, String.class);
+        return response;
     }
 }
