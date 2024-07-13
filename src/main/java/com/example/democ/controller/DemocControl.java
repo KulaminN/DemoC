@@ -1,13 +1,17 @@
 package com.example.democ.controller;
 
+import com.example.democ.config.NotificationBotConfig;
 import com.example.democ.service.DemocLogic;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RestController;
 import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer;
 import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
+import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
+import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
@@ -16,6 +20,8 @@ import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,11 +31,26 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
     private final TelegramClient telegramClient;
     private final String token;
     private final DemocLogic democLogic;
+    final NotificationBotConfig botConfig;
+    static final String HELP_TEXT = "Этот бот создан для помощи в тренировках\n\n" +
+    "Вы можете выбрать упражнения, в которых хотите развиваться, либо посчитать суточную норму калорий\n\n" +
+    "Нажмите /start чтобы начать работу с ботом\n\n" + "Нажмите /help чтобы получить данное сообщение\n\n" +
+    "Нажмите /changetime чтобы изменить время напоминаний\n\n";
 
-    public DemocControl(@Value("${botToken}") String token, TelegramClient telegramClient, DemocLogic democLogic) {
+    public DemocControl(@Value("${botToken}") String token, TelegramClient telegramClient, DemocLogic democLogic, NotificationBotConfig botConfig) {
         this.telegramClient = telegramClient;
         this.token = token;
         this.democLogic = democLogic;
+        this.botConfig = botConfig;
+        List<BotCommand> listOfCommands = new ArrayList<>();
+        listOfCommands.add(new BotCommand("/start", "получить стартовое сообщение"));
+        listOfCommands.add(new BotCommand("/help", "получить описание бота"));
+        listOfCommands.add(new BotCommand("/changetime", "изменить время напоминаний"));
+        try{
+            telegramClient.execute(new SetMyCommands(listOfCommands, new BotCommandScopeDefault(), null));
+        } catch (TelegramApiException e){
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -80,7 +101,9 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
                 e.printStackTrace();
             }
             System.out.println(update.hasCallbackQuery());
-        }   else if (update.hasCallbackQuery()) {
+        } else if (message_text.equals("/help")) {
+            Send(HELP_TEXT, update.getMessage().getChatId());
+        } else if (update.hasCallbackQuery()) {
 
             System.out.println(update.getCallbackQuery().getData()+ ":" + update.getCallbackQuery().getMessage().getChatId()+":"+update.getCallbackQuery().getMessage().getChat().getUserName()+":"+update.getCallbackQuery().getMessage().getChat().getFirstName());
 
@@ -94,6 +117,7 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
                 case "Калории" ->{
                     answer = "Введите параметры для подсчета калорий.\n Рост(см):";
                     Send(answer,update.getCallbackQuery().getMessage().getChatId());
+
                 }
             }
         }else {
