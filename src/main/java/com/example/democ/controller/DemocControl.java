@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -68,6 +69,7 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
     public void consume(Update update) {
         String answer = "";
         String message_text = "";
+        boolean leaver = false;
         if (update.hasMessage() && update.getMessage().hasText()) {
             message_text = update.getMessage().getText();
             String userName = update.getMessage().getFrom().getUserName();
@@ -121,59 +123,44 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
                 case "Мужчина":
                     answer = "Введите вес(кг) и рост(см) и возраст:";
                     Send(answer, update.getCallbackQuery().getMessage().getChatId());
-                    if (update.hasMessage()) {
-                        String[] weightAndheightM = new String[]{update.getMessage().getText()};
-                        System.out.println(weightAndheightM);
-                        if (weightAndheightM.length == 3 && weightAndheightM[0].matches("\\d+")
-                                && weightAndheightM[1].matches("\\d+") && weightAndheightM[2].matches("\\d+")) {
-                            String resultNum = String.format("%.1f", 655, 1 + 9, 563 * Integer.parseInt(weightAndheightM[0]) + 1, 85 * Integer.parseInt(weightAndheightM[1]) - 4, 676 * Integer.parseInt(weightAndheightM[2]));
-                            System.out.println(resultNum);
-                        }
-                        answer = "Введите вес(кг):";
+                    System.out.println("HI");
+                    System.out.println(update.hasMessage());
+                    System.out.println(update.hasCallbackQuery());
+                    leaver = true;
 
 
-                    }
                     break;
                 case "Женщина":
-                    answer = "Введите рост(см):";
+                    answer = "Введите вес(кг) и рост(см) и возраст:";
                     Send(answer, update.getCallbackQuery().getMessage().getChatId());
-                    String heightF = update.getMessage().getText();
-                    answer = "Введите вес(кг):";
-                    String weightF = update.getMessage().getText();
-                    System.out.println(weightF);
+                    System.out.println("HI");
+                    System.out.println(update.hasMessage());
+                    System.out.println(update.hasCallbackQuery());
+                    leaver = false;
+
                     break;
             }
-        //}else if
-            /*} else {
-            String regex = "(\\d{2}\\.\\d{2}\\.\\d{4}\\s\\d{2}:\\d{2})\\s(.+)";
+        }else if (update.hasMessage()) {
+            String weightAndheightMa = update.getMessage().getText();
+            StringTokenizer strTok = new StringTokenizer(weightAndheightMa," ");
+            String[] weightAndheightM = new String[3];
 
-            Pattern pattern = Pattern.compile(regex);
-            Matcher matcher = pattern.matcher(message_text);
+            for (int i = 0; strTok.hasMoreElements(); i++) {
+                weightAndheightM[i] = (String) strTok.nextElement();
+            }
+            int cal;
+            if (leaver) {
+                cal = (int) ((((Integer.parseInt(weightAndheightM[0]) * 10) + Integer.parseInt(weightAndheightM[1]) * 6.25) - Integer.parseInt(weightAndheightM[2])) + 5);
+            } else{
+                cal = (int) ((((Integer.parseInt(weightAndheightM[0]) * 10) + Integer.parseInt(weightAndheightM[1]) * 6.25) - Integer.parseInt(weightAndheightM[2])) - 161);
+            }
 
-            if (matcher.matches()) {
-                String dateTime = matcher.group(1);
-                String message = matcher.group(2);
-                DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
-
-                democLogic.createNotification(update.getMessage().getChatId(), LocalDateTime.parse(dateTime, dateFormatter), message);
+            System.out.println(cal);
 
 
-                System.out.println("Дата = " + dateTime + " Сообщение = " + message);
-            } else {
-                answer = "неверный формат. Пришли сообщение формата: дд.мм.гггг чч:мм текст напоминания";
-                SendMessage message = SendMessage
-                        .builder()
-                        .chatId(update.getMessage().getChatId())
-                        .text(answer)
-                        .build();
 
-                try {
-                    telegramClient.execute(message);
-                } catch (TelegramApiException e) {
-                    e.printStackTrace();
-                }
-            }*/
         }
+
     }
     void Send(String message_text,long chat_id){
         SendMessage message = SendMessage
