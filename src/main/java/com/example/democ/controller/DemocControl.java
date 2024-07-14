@@ -32,6 +32,7 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
     private final String token;
     private final DemocLogic democLogic;
     final NotificationBotConfig botConfig;
+
     static final String HELP_TEXT = "Этот бот создан для помощи в тренировках\n\n" +
     "Вы можете выбрать упражнения, в которых хотите развиваться, либо посчитать суточную норму калорий\n\n" +
     "Нажмите /start чтобы начать работу с ботом\n\n" + "Нажмите /help чтобы получить данное сообщение\n\n" +
@@ -100,27 +101,50 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
-            System.out.println(update.hasCallbackQuery());
         } else if (message_text.equals("/help")) {
             Send(HELP_TEXT, update.getMessage().getChatId());
         } else if (update.hasCallbackQuery()) {
 
-            System.out.println(update.getCallbackQuery().getData()+ ":" + update.getCallbackQuery().getMessage().getChatId()+":"+update.getCallbackQuery().getMessage().getChat().getUserName()+":"+update.getCallbackQuery().getMessage().getChat().getFirstName());
-
+            System.out.println(update.getCallbackQuery().getData() + ":" + update.getCallbackQuery().getMessage().getChatId() + ":" + update.getCallbackQuery().getMessage().getChat().getUserName() + ":" + update.getCallbackQuery().getMessage().getChat().getFirstName());
             String call_data = update.getCallbackQuery().getData();
             switch (call_data) {
-                case "Тренировки" -> {
+                case "Тренировки":
                     answer = "Выберите программу тренировок:";
-                    String[] bca = {"Отжимания","Подтягивания","Брусья"};
-                    SendWithButtons(answer,vec(3,bca,bca),update.getCallbackQuery().getMessage().getChatId());
-                }
-                case "Калории" ->{
-                    answer = "Введите параметры для подсчета калорий.\n Рост(см):";
-                    Send(answer,update.getCallbackQuery().getMessage().getChatId());
+                    String[] bca = {"Отжимания", "Подтягивания", "Брусья"};
+                    SendWithButtons(answer, vec(3, bca, bca), update.getCallbackQuery().getMessage().getChatId());
+                    break;
+                case "Калории":
+                    answer = "Введите параметры для подсчета калорий.\n Для начала выберите пол:";
+                    String[] gender = {"Мужчина", "Женщина"};
+                    SendWithButtons(answer, vec(2, gender, gender), update.getCallbackQuery().getMessage().getChatId());
+                    break;
+                case "Мужчина":
+                    answer = "Введите вес(кг) и рост(см) и возраст:";
+                    Send(answer, update.getCallbackQuery().getMessage().getChatId());
+                    if (update.hasMessage()) {
+                        String[] weightAndheightM = new String[]{update.getMessage().getText()};
+                        System.out.println(weightAndheightM);
+                        if (weightAndheightM.length == 3 && weightAndheightM[0].matches("\\d+")
+                                && weightAndheightM[1].matches("\\d+") && weightAndheightM[2].matches("\\d+")) {
+                            String resultNum = String.format("%.1f", 655, 1 + 9, 563 * Integer.parseInt(weightAndheightM[0]) + 1, 85 * Integer.parseInt(weightAndheightM[1]) - 4, 676 * Integer.parseInt(weightAndheightM[2]));
+                            System.out.println(resultNum);
+                        }
+                        answer = "Введите вес(кг):";
 
-                }
+
+                    }
+                    break;
+                case "Женщина":
+                    answer = "Введите рост(см):";
+                    Send(answer, update.getCallbackQuery().getMessage().getChatId());
+                    String heightF = update.getMessage().getText();
+                    answer = "Введите вес(кг):";
+                    String weightF = update.getMessage().getText();
+                    System.out.println(weightF);
+                    break;
             }
-        }else {
+        //}else if
+            /*} else {
             String regex = "(\\d{2}\\.\\d{2}\\.\\d{4}\\s\\d{2}:\\d{2})\\s(.+)";
 
             Pattern pattern = Pattern.compile(regex);
@@ -130,6 +154,7 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
                 String dateTime = matcher.group(1);
                 String message = matcher.group(2);
                 DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
                 democLogic.createNotification(update.getMessage().getChatId(), LocalDateTime.parse(dateTime, dateFormatter), message);
 
 
@@ -147,7 +172,7 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
                 } catch (TelegramApiException e) {
                     e.printStackTrace();
                 }
-            }
+            }*/
         }
     }
     void Send(String message_text,long chat_id){
