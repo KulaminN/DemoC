@@ -15,17 +15,39 @@ public class NotificationEntity {
     private LocalDateTime notificationTime;
     private String message;
     private boolean isSent;
+    private Long week;
+    private int date;
 
     public NotificationEntity() {
 
     }
-    public NotificationEntity(Long chatId, LocalDateTime notificationTime, String message){
+
+
+    public int getDate() {
+        return date;
+    }
+
+    public void setDate(int date) {
+        this.date = date;
+    }
+
+    public NotificationEntity(Long chatId, LocalDateTime notificationTime, String message, Long week, int date){
         this.chatId = chatId;
         this.notificationTime = notificationTime;
         this.message = message;
+        this.week = week;
         this.isSent = false;
+        this.date = date;
     }
 
+
+    public Long getWeek() {
+        return week;
+    }
+
+    public void setWeek(Long week) {
+        this.week = week;
+    }
     public Long getId() {
         return id;
     }
