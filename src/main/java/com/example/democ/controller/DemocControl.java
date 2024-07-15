@@ -2,19 +2,14 @@ package com.example.democ.controller;
 
 import com.example.democ.service.DemocLogic;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cglib.core.Local;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer;
 import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
@@ -23,14 +18,11 @@ import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.lang.Math.signum;
 import static java.lang.Math.toIntExact;
 
 @RestController
@@ -40,7 +32,7 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
     private final String token;
     private final DemocLogic democLogic;
     public static int date = 0;
-    Long week = 0L;
+    static Long week = 0L;
 
     public DemocControl(@Value("${botToken}") String token, TelegramClient telegramClient, DemocLogic democLogic) {
         this.telegramClient = telegramClient;
@@ -111,7 +103,10 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
                 }
             }
         } else if (per != -1 && (update.getMessage().getText().matches("\\d") || update.getMessage().getText().matches("\\d{2}"))) {
-            week = Long.valueOf(update.getMessage().getText());
+            for (int i = 0; i < 1; i++) {
+                week = Long.valueOf(update.getMessage().getText());
+            }
+
             switch (per) {
                 case 1 -> {
                     Send("Вам нужно будет выполнять необходимое количество отжиманий 1 раз в 2 дня. \nУстановите время тренировки в формате (чч:мм)", update.getMessage().getChatId());
