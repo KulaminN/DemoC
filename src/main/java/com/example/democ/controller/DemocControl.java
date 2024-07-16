@@ -7,9 +7,12 @@ import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer;
 import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
+import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
+import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
@@ -19,6 +22,9 @@ import org.telegram.telegrambots.meta.generics.TelegramClient;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,11 +39,23 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
     private final DemocLogic democLogic;
     public static int date = 0;
     static Long week = 0L;
+    static final String HELP_TEXT = "Этот бот создан для помощи в тренировках\n\n" +
+            "Вы можете выбрать упражнения, в которых хотите развиваться, либо посчитать суточную норму калорий\n\n" +
+            "Нажмите /start чтобы начать работу с ботом\n\n" + "Нажмите /help чтобы получить данное сообщение\n\n" ;
 
     public DemocControl(@Value("${botToken}") String token, TelegramClient telegramClient, DemocLogic democLogic) {
         this.telegramClient = telegramClient;
         this.token = token;
         this.democLogic = democLogic;
+        List<BotCommand> listOfCommands = new ArrayList<>();
+        listOfCommands.add(new BotCommand("/start", "получить стартовое сообщение"));
+        listOfCommands.add(new BotCommand("/help", "получить описание бота"));
+
+        try{
+            telegramClient.execute(new SetMyCommands(listOfCommands, new BotCommandScopeDefault(), null));
+        } catch (TelegramApiException e){
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -55,6 +73,7 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
         String answer = "";
         String message_text = "";
         String Time = "";
+        boolean leaver = false;
         if (update.hasMessage() && update.getMessage().hasText()) {
             message_text = update.getMessage().getText();
             String userName = update.getMessage().getFrom().getUserName();
@@ -64,6 +83,8 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
             String[] Buttons = {"Тренировки", "Калории"};
             Send(answer, vec(2, Buttons, Buttons), update.getMessage().getChatId());
             System.out.println(update.hasCallbackQuery());
+        } else if (message_text.equals("/help")) {
+            Send(HELP_TEXT, update.getMessage().getChatId());
         } else if (update.hasCallbackQuery()) {
 
             System.out.println(update.getCallbackQuery().getData() + ":" + update.getCallbackQuery().getMessage().getChatId() + ":" + update.getCallbackQuery().getMessage().getChat().getUserName() + ":" + update.getCallbackQuery().getMessage().getChat().getFirstName());
@@ -78,22 +99,42 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
                     Edit(answer, update.getCallbackQuery().getMessage().getChatId(), update.getCallbackQuery().getMessage().getMessageId(), vec(4, bca, bca));
                 }
                 case "Калории" -> {
-                    answer = "Введите параметры для подсчета калорий.\n Рост(см):";
+                    answer = "Введите параметры для подсчета калорий.\n Для начала выберите пол:";
+                    String[] gender = {"Мужчина", "Женщина", "Назад"};
+                    Send(answer, vec(3, gender, gender), update.getCallbackQuery().getMessage().getChatId());
+                    break;
+                }
+                case "Мужчина" -> {
+                    answer = "Введите вес(кг) и рост(см) и возраст:\nПример ввода данных: 70 180 18";
                     Send(answer, update.getCallbackQuery().getMessage().getChatId());
+                    System.out.println("HI");
+                    System.out.println(update.hasMessage());
+                    System.out.println(update.hasCallbackQuery());
+                    leaver = true;
+                    break;
+                }
+                case "Женщина" -> {
+                    answer = "Введите вес(кг) и рост(см) и возраст:\nПример ввода: 70 180 18";
+                    Send(answer, update.getCallbackQuery().getMessage().getChatId());
+                    System.out.println("HI");
+                    System.out.println(update.hasMessage());
+                    System.out.println(update.hasCallbackQuery());
+                    leaver = false;
+                    break;
                 }
                 case "Отжимания" -> {
                     sendPhoto("https://post-images.org/photo-page.php?photo=rJCbLIYF", chatId);
-                    Send("Вот ваш план тенировок. С какой недели хотели бы начать? (1-15)", chatId);
+                    Send("Вот ваш план тренировок. С какой недели хотели бы начать? (1-15)", chatId);
                     per = 1;
                 }
                 case "Брусья" -> {
                     sendPhoto("https://post-images.org/photo-page.php?photo=qcxo1zvy", chatId);
-                    Send("Вот ваш план тенировок. С какой недели хотели бы начать? (1-17)", chatId);
+                    Send("Вот ваш план тренировок. С какой недели хотели бы начать? (1-17)", chatId);
                     per = 3;
                 }
                 case "Подтягивания" -> {
                     sendPhoto("https://post-images.org/photo-page.php?photo=JFDNjGaV", chatId);
-                    Send("Вот ваш план тенировок. С какой недели хотели бы начать? (1-30)", chatId);
+                    Send("Вот ваш план тренировок. С какой недели хотели бы начать? (1-30)", chatId);
                     per = 2;
                 }
                 case "Назад" -> {
@@ -119,7 +160,24 @@ public class DemocControl implements SpringLongPollingBot, LongPollingSingleThre
                     Send("Вам нужно будет выполнять необходимое количество отжиманий на брусьях 1 раз в 2 дня. \nУстановите время тренировки в формате (чч:мм)", update.getMessage().getChatId());
                 }
             }
-        } else {
+        }else if (update.getMessage().getText().contains(" ")) {
+            String weightAndheightMa = update.getMessage().getText();
+            StringTokenizer strTok = new StringTokenizer(weightAndheightMa, " ");
+            String[] weightAndheightM = new String[3];
+
+            for (int i = 0; strTok.hasMoreElements(); i++) {
+                weightAndheightM[i] = (String) strTok.nextElement();
+            }
+            int cal;
+            if (leaver) {
+                cal = (int) ((int) ((((Integer.parseInt(weightAndheightM[0]) * 10) + Integer.parseInt(weightAndheightM[1]) * 6.25) - Integer.parseInt(weightAndheightM[2])) + 5) * 1.5);
+            } else {
+                cal = (int) ((int) ((((Integer.parseInt(weightAndheightM[0]) * 10) + Integer.parseInt(weightAndheightM[1]) * 6.25) - Integer.parseInt(weightAndheightM[2])) - 161)*1.3);
+            }
+
+            Send("Ваша суточная норма калорий: " + cal + " ккал", update.getMessage().getChatId() );
+        }else{
+
             System.out.println("asgojsdjgld");
             message_text = update.getMessage().getText();
             String regex = "(\\d{2}:\\d{2})";
